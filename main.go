@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"path"
 	"strings"
@@ -56,6 +57,14 @@ func handleExecuteScript(scripts string) fastglue.FastRequestHandler {
 		script := r.RequestCtx.UserValue("script").(string)
 		args := []string{}
 		json.Unmarshal(r.RequestCtx.PostBody(), &args)
+
+		// Check if the given script is in the scripts directory.
+		if _, err := os.Stat(path.Join(scripts, script)); err != nil {
+			r.RequestCtx.SetStatusCode(fasthttp.StatusNotFound)
+			r.RequestCtx.WriteString("error finding given script")
+			return nil
+		}
+
 		log.Printf("executing: %s %s", path.Join(scripts, script), strings.Join(args, " "))
 		output, err := exec.Command(path.Join(scripts, script), args...).CombinedOutput()
 		if err != nil {
