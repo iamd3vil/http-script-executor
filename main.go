@@ -37,6 +37,7 @@ func main() {
 	}
 
 	g := fastglue.New()
+	g.GET("/", handleIndex())
 	g.POST("/{script}", handleExecuteScript(ko.String("script_folder")))
 
 	s := &fasthttp.Server{
@@ -49,6 +50,14 @@ func main() {
 
 	if err := g.ListenAndServe(ko.String("addr"), "", s); err != nil {
 		log.Fatalf("Error in ListenAndServe: %s", err)
+	}
+}
+
+func handleIndex() fastglue.FastRequestHandler {
+	return func(r *fastglue.Request) error {
+		r.RequestCtx.WriteString("Hello from http-script-executor.")
+		r.RequestCtx.SetStatusCode(fasthttp.StatusOK)
+		return nil
 	}
 }
 
