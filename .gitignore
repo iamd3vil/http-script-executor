@@ -1,2 +1,4 @@
 *.sh
 config.toml
+dist/
+http-script-executor
