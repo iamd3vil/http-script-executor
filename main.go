@@ -77,10 +77,13 @@ func handleExecuteScript(scripts string) fastglue.FastRequestHandler {
 		log.Printf("executing: %s %s", path.Join(scripts, script), strings.Join(args, " "))
 		output, err := exec.Command(path.Join(scripts, script), args...).CombinedOutput()
 		if err != nil {
+			log.Printf("error executing, err: %s, output: %s", err.Error(), output)
 			r.RequestCtx.WriteString(err.Error())
 			r.RequestCtx.SetStatusCode(fasthttp.StatusInternalServerError)
 			return nil
 		}
+		log.Println(string(output))
+		log.Printf("finshed executing: %s %s", path.Join(scripts, script), strings.Join(args, " "))
 
 		fmt.Fprint(r.RequestCtx, string(output))
 		return nil
