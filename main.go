@@ -67,15 +67,23 @@ func handleExecuteScript(scripts string) fastglue.FastRequestHandler {
 		args := []string{}
 		json.Unmarshal(r.RequestCtx.PostBody(), &args)
 
-		// Check if the given script is in the scripts directory.
-		if _, err := os.Stat(path.Join(scripts, script)); err != nil {
+		scriptPath := path.Join(scripts, script)
+		// Check if the base dir of script path is the same as script dir.
+		if path.Dir(scriptPath) != scripts {
 			r.RequestCtx.SetStatusCode(fasthttp.StatusNotFound)
 			r.RequestCtx.WriteString("error finding given script")
 			return nil
 		}
 
-		log.Printf("executing: %s %s", path.Join(scripts, script), strings.Join(args, " "))
-		output, err := exec.Command(path.Join(scripts, script), args...).CombinedOutput()
+		// Check if the given script is in the scripts directory.
+		if _, err := os.Stat(scriptPath); err != nil {
+			r.RequestCtx.SetStatusCode(fasthttp.StatusNotFound)
+			r.RequestCtx.WriteString("error finding given script")
+			return nil
+		}
+
+		log.Printf("executing: %s %s", scriptPath, strings.Join(args, " "))
+		output, err := exec.Command(scriptPath, args...).CombinedOutput()
 		if err != nil {
 			log.Printf("error executing, err: %s, output: %s", err.Error(), output)
 			r.RequestCtx.WriteString(err.Error())
@@ -83,7 +91,7 @@ func handleExecuteScript(scripts string) fastglue.FastRequestHandler {
 			return nil
 		}
 		log.Println(string(output))
-		log.Printf("finshed executing: %s %s", path.Join(scripts, script), strings.Join(args, " "))
+		log.Printf("finshed executing: %s %s", scriptPath, strings.Join(args, " "))
 
 		fmt.Fprint(r.RequestCtx, string(output))
 		return nil
