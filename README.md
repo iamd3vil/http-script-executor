@@ -1,3 +1,5 @@
+<a href="https://zerodha.tech"><img src="https://zerodha.tech/static/images/github-badge.svg" align="right" /></a>
+
 # HTTP Script Executor
 
 A simple HTTP server to execute scripts.
@@ -33,6 +35,6 @@ curl --request POST \
   --data '["a", "b"]'
 ```
 
-- If the script is successfully executed, this returns a `200` with combined output of `stdout`, `stderr`. 
+- If the script is successfully executed, this returns a `200` with combined output of `stdout`, `stderr`.
 - If there's an error executing the script, `500` is returned with the error.
 - If the server is not able to find the script in the given `scripts_dir`, `404` is returned.
