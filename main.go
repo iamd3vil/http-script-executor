@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -38,7 +39,8 @@ func main() {
 
 	g := fastglue.New()
 	g.GET("/", handleIndex())
-	g.POST("/{script}", handleExecuteScript(ko.String("script_folder")))
+	scriptsPath := path.Clean(ko.String("script_folder"))
+	g.POST(`/{script:*}`, handleExecuteScript(scriptsPath))
 
 	s := &fasthttp.Server{
 		Name:         "HTTP Script Executor",
@@ -68,8 +70,9 @@ func handleExecuteScript(scripts string) fastglue.FastRequestHandler {
 		json.Unmarshal(r.RequestCtx.PostBody(), &args)
 
 		scriptPath := path.Join(scripts, script)
+		fmt.Printf("script: %s\n", scriptPath)
 		// Check if the base dir of script path is the same as script dir.
-		if path.Dir(scriptPath) != scripts {
+		if !isSubPath(scripts, scriptPath) {
 			r.RequestCtx.SetStatusCode(fasthttp.StatusNotFound)
 			r.RequestCtx.WriteString("error finding given script")
 			return nil
@@ -91,9 +94,26 @@ func handleExecuteScript(scripts string) fastglue.FastRequestHandler {
 			return nil
 		}
 		log.Println(string(output))
-		log.Printf("finshed executing: %s %s", scriptPath, strings.Join(args, " "))
+		log.Printf("finished executing: %s %s", scriptPath, strings.Join(args, " "))
 
 		fmt.Fprint(r.RequestCtx, string(output))
 		return nil
 	}
+}
+
+func isSubPath(parentPath, childPath string) bool {
+	parentPath = path.Clean(parentPath)
+	childPath = path.Clean(childPath)
+
+	absParent, err := filepath.Abs(parentPath)
+	if err != nil {
+		return false
+	}
+
+	absChild, err := filepath.Abs(childPath)
+	if err != nil {
+		return false
+	}
+
+	return strings.HasPrefix(absChild, absParent)
 }
